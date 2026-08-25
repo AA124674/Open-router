@@ -6,16 +6,21 @@ can serve plain HTML, including GitHub Pages.
 
 ## Features
 
-- **Any OpenRouter model** — type any model ID (e.g. `openai/gpt-4o-mini`,
-  `anthropic/claude-3.5-sonnet`, `meta-llama/llama-3.1-8b-instruct:free`).
-  The settings field also offers autocomplete from OpenRouter's live model list.
+- **Free OpenRouter models only** — the model picker is filtered to models
+  OpenRouter reports at zero cost (checked by actual price, not just a
+  `:free` suffix, since not every free model uses one). Type any model ID
+  directly if you want something outside that list.
 - **Streaming responses**, with a Stop button to cancel mid-generation
   (optional — can be turned off in Settings).
 - **Permanent chats** — every conversation is saved to this browser's
   `localStorage` automatically and reloads exactly as you left it.
-- **Multiple chats**, with search, rename, and delete.
-- **Copying**: a per-message Copy button, a per-code-block Copy button, and a
-  "Copy conversation" button that copies the whole thread as plain text.
+- **Multiple chats**, managed entirely from the sidebar — hover a chat for
+  rename, copy, and delete. There's no top bar; the current model is shown
+  as a small pill above the message box (tap it to change models), and on
+  mobile a floating button opens the chat list.
+- **Copying**: a per-message Copy button, a per-code-block Copy button, and
+  a per-chat Copy action in the sidebar that copies the whole thread as
+  plain text.
 - **Light / dark / system theme.**
 - **Mobile-friendly** collapsible sidebar.
 - Adjustable temperature, max tokens, and an optional system prompt.

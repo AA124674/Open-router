@@ -4,47 +4,51 @@
    ------------------------------------------------------------------------ */
 
 :root {
-  --accent: #e0a458;
-  --accent-ink: #1b1300;
-  --danger: #d96a5f;
   --radius: 10px;
   --radius-sm: 7px;
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
 }
 
+/* Paper-and-clay palette, matching the original Copilot Studio site. */
 html[data-theme="dark"] {
-  --bg: #15171c;
-  --bg-raised: #1b1e25;
-  --bg-sunk: #101216;
-  --sidebar-bg: #17191f;
-  --line: #2a2d36;
-  --line-soft: #23252c;
-  --ink: #e9eaee;
-  --ink-dim: #a6a9b4;
-  --ink-faint: #6d707c;
-  --bubble-user: #262a33;
-  --bubble-assistant: #1b1e25;
-  --code-bg: #101216;
-  --shadow: 0 12px 32px rgba(0, 0, 0, .38);
-  --scrim: rgba(6, 7, 9, .55);
+  --bg: #262624;
+  --bg-raised: #30302E;
+  --bg-sunk: #2A2A28;
+  --sidebar-bg: #1F1F1D;
+  --line: #3E3E3B;
+  --line-soft: #343432;
+  --ink: #F5F4EF;
+  --ink-dim: #A3A29C;
+  --ink-faint: #6E6D67;
+  --bubble-user: #3A2A24;
+  --bubble-assistant: #30302E;
+  --code-bg: #2A2A28;
+  --accent: #D97757;
+  --accent-ink: #241205;
+  --danger: #E58C77;
+  --shadow: 0 18px 48px rgba(0, 0, 0, .35), 0 4px 12px rgba(0, 0, 0, .2);
+  --scrim: rgba(0, 0, 0, .6);
 }
 
 html[data-theme="light"] {
-  --bg: #fbfbfa;
-  --bg-raised: #ffffff;
-  --bg-sunk: #f1f1ef;
-  --sidebar-bg: #f4f4f2;
-  --line: #e2e1dc;
-  --line-soft: #ececea;
-  --ink: #1d1d1b;
-  --ink-dim: #5c5c58;
-  --ink-faint: #8c8b85;
-  --bubble-user: #eeede8;
-  --bubble-assistant: #ffffff;
-  --code-bg: #f1f1ef;
-  --shadow: 0 12px 28px rgba(30, 25, 15, .1);
-  --scrim: rgba(30, 28, 22, .3);
+  --bg: #F0EEE6;
+  --bg-raised: #FFFFFF;
+  --bg-sunk: #F5F4EF;
+  --sidebar-bg: #F5F3EE;
+  --line: #E3E1D9;
+  --line-soft: #ECEAE1;
+  --ink: #141413;
+  --ink-dim: #73726C;
+  --ink-faint: #A3A29C;
+  --bubble-user: #F4E7E1;
+  --bubble-assistant: #FFFFFF;
+  --code-bg: #F5F4EF;
+  --accent: #C96442;
+  --accent-ink: #FFFFFF;
+  --danger: #A6412F;
+  --shadow: 0 18px 48px rgba(20, 20, 19, .16), 0 4px 12px rgba(20, 20, 19, .08);
+  --scrim: rgba(20, 20, 19, .45);
 }
 
 * { box-sizing: border-box; }
@@ -104,7 +108,11 @@ svg { display: block; width: 18px; height: 18px; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; letter-spacing: .01em; }
 .brand-mark { color: var(--accent); display: flex; }
 .brand-mark svg { width: 20px; height: 20px; }
-.only-mobile { display: none; }
+/* !important: .icon-btn sets display:grid unconditionally, same specificity
+   as this class, and appears later in the file — without !important here,
+   .icon-btn would win the cascade and this "mobile only" toggle would be
+   silently ignored, showing these buttons on desktop too. */
+.only-mobile { display: none !important; }
 
 .btn-new {
   margin: 4px 14px 10px;
@@ -210,52 +218,41 @@ svg { display: block; width: 18px; height: 18px; }
   min-height: 0;
 }
 
-.topbar {
+/* Floating sidebar toggle — replaces the old fixed topbar on mobile,
+   where a persistent way back into the chat list is still needed. */
+.mobile-menu-btn {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 25;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.composer-toolbar {
   flex: 0 0 auto;
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px 20px 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  justify-content: flex-start;
 }
-.topbar-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.chat-title-input {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 46ch;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--ink);
-  font-size: 14.5px;
-  font-weight: 600;
-  padding: 5px 7px;
-  border-radius: var(--radius-sm);
-  text-overflow: ellipsis;
-}
-.chat-title-input:not(:disabled):hover { border-color: var(--line); }
-.chat-title-input:not(:disabled):focus { border-color: var(--accent); background: var(--bg-raised); }
-.chat-title-input:disabled { color: var(--ink-faint); }
-.model-badge {
-  flex: 0 0 auto;
+.model-pill {
   font-size: 11.5px;
   color: var(--ink-faint);
   background: var(--bg-sunk);
   border: 1px solid var(--line);
-  padding: 3px 8px;
+  padding: 5px 10px;
   border-radius: 999px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 34ch;
+  max-width: 100%;
+  cursor: pointer;
 }
-.topbar-acts { display: flex; gap: 4px; flex: 0 0 auto; }
+.model-pill:hover { border-color: var(--accent); color: var(--ink); }
 
 /* -------------------------------------------------------------- buttons */
 
@@ -568,6 +565,12 @@ svg { display: block; width: 18px; height: 18px; }
   color: var(--ink-faint);
   margin: 0 0 10px;
 }
+.set-section h3 .hint-inline {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  color: var(--accent);
+}
 .set-section-danger { padding-top: 14px; border-top: 1px solid var(--line); }
 
 .field { margin-bottom: 12px; }
@@ -656,8 +659,8 @@ svg { display: block; width: 18px; height: 18px; }
   }
   .app.sidebar-open .sidebar { transform: translateX(0); }
   .app.sidebar-open .scrim { display: block; }
-  .only-mobile { display: grid; }
-  .chat-title-input { max-width: 22ch; }
+  .only-mobile { display: grid !important; }
+  .messages { padding-top: 60px; }
   .msg-bubble { max-width: 92%; }
 }
 

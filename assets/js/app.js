@@ -27,7 +27,7 @@
   var LS_CHATS = "router.chats.v1";
   var LS_SETTINGS = "router.settings.v1";
   var LS_ACTIVE = "router.active.v1";
-  var LS_MODEL_CACHE = "router.modelcache.v1";
+  var LS_MODEL_CACHE = "router.modelcache.v2"; // v2: free-only filter
 
   var DEFAULT_SETTINGS = {
     apiKey: "",
@@ -39,20 +39,17 @@
     theme: "dark"
   };
 
-  // A small, curated fallback so the model field is never empty, even
-  // offline or the first time the live list can't be reached. Any model ID
-  // can still be typed in by hand — this list is only a convenience.
+  // A small, curated fallback so the model field isn't empty before the
+  // live list loads (or if it can't be reached). Free-tier IDs on
+  // OpenRouter rotate often, so this is only a convenience — the live
+  // fetch below is what actually keeps the picker current and free-only.
   var FALLBACK_MODELS = [
-    { id: "openai/gpt-4o-mini", name: "OpenAI: GPT-4o mini" },
-    { id: "openai/gpt-4o", name: "OpenAI: GPT-4o" },
-    { id: "anthropic/claude-3.5-sonnet", name: "Anthropic: Claude 3.5 Sonnet" },
-    { id: "anthropic/claude-3-haiku", name: "Anthropic: Claude 3 Haiku" },
-    { id: "google/gemini-flash-1.5", name: "Google: Gemini 1.5 Flash" },
-    { id: "google/gemini-pro-1.5", name: "Google: Gemini 1.5 Pro" },
-    { id: "meta-llama/llama-3.1-8b-instruct:free", name: "Meta: Llama 3.1 8B (free)" },
-    { id: "meta-llama/llama-3.1-70b-instruct", name: "Meta: Llama 3.1 70B" },
-    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral: 7B Instruct (free)" },
-    { id: "deepseek/deepseek-chat", name: "DeepSeek: Chat" }
+    { id: "stealth/ox-alpha", name: "Ox Alpha (free)" },
+    { id: "poolside/laguna-s-2.1:free", name: "Poolside: Laguna S 2.1 (free)" },
+    { id: "nvidia/nemotron-3.5-lightning:free", name: "NVIDIA: Nemotron 3.5 Lightning (free)" },
+    { id: "thinkingmachines/inkling:free", name: "Thinking Machines: Inkling (free)" },
+    { id: "liquid/lfm-2.5-2.6b:free", name: "LiquidAI: LFM2.5-2.6B (free)" },
+    { id: "dots-studio/dots-3-note-preview:free", name: "Dots Studio: Dots3-Note Preview (free)" }
   ];
 
   function loadJson(key, fallback) {
@@ -328,8 +325,8 @@
     toast("All chats deleted.");
   }
 
-  function renameActiveChat(title) {
-    var c = activeChat();
+  function renameChat(id, title) {
+    var c = chatById(id);
     if (!c) return;
     var clean = title.trim();
     c.title = clean || "New chat";
@@ -345,12 +342,15 @@
     chat.title = t.length > 48 ? t.slice(0, 48).trim() + "…" : (t || "New chat");
     saveChats();
     renderSidebar();
-    if (state.activeChat === chat.id) $("#chat-title").value = chat.title;
   }
 
   /* ------------------------------------------------------------ sidebar */
 
   var ICON_TRASH = '<svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m2 0-.7 12.1A2 2 0 0 1 14.3 21H9.7a2 2 0 0 1-2-1.9L7 7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ICON_PENCIL = '<svg viewBox="0 0 24 24"><path d="M15.7 4.3a1.5 1.5 0 0 1 2.1 0l1.9 1.9a1.5 1.5 0 0 1 0 2.1L8.3 19.7l-4.3.9.9-4.3Z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ICON_COPY_SM = '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>';
+
+  var renamingId = null; // chat currently shown as an inline-edit row, if any
 
   function renderSidebar() {
     var host = $("#chat-list");
@@ -367,21 +367,30 @@
     }
 
     host.innerHTML = list.map(function (c) {
+      if (c.id === renamingId) {
+        return '<div class="chat-row active">' +
+          '<input class="chat-title-edit" type="text" data-rename-input="' + c.id + '" value="' + escapeHtml(c.title) + '">' +
+          "</div>";
+      }
       return '<div class="chat-row' + (c.id === state.activeChat ? " active" : "") + '">' +
         '<button class="chat-row-btn" data-select="' + c.id + '"></button>' +
         '<span class="chat-row-acts">' +
+        '<button class="chat-row-act" data-rename="' + c.id + '" title="Rename chat" aria-label="Rename chat">' + ICON_PENCIL + "</button>" +
+        '<button class="chat-row-act" data-copy="' + c.id + '" title="Copy conversation" aria-label="Copy conversation">' + ICON_COPY_SM + "</button>" +
         '<button class="chat-row-act" data-delete="' + c.id + '" title="Delete chat" aria-label="Delete chat">' + ICON_TRASH + "</button>" +
         "</span></div>";
     }).join("");
     // Titles set as text, never interpolated into markup.
     $$("[data-select]", host).forEach(function (btn, i) { btn.textContent = list[i].title; });
+
+    var editInput = $("[data-rename-input]", host);
+    if (editInput) { editInput.focus(); editInput.select(); }
   }
 
   /* ------------------------------------------------------------- render */
 
   function renderChat() {
     var chat = activeChat();
-    var titleInput = $("#chat-title");
     var badge = $("#model-badge");
     var empty = $("#empty-state");
     // A permanent sibling of #empty-state, toggled rather than rebuilt —
@@ -390,9 +399,6 @@
     var wrap = $("#messages-inner");
 
     if (!chat) {
-      titleInput.value = "";
-      titleInput.disabled = true;
-      titleInput.placeholder = "New chat";
       badge.textContent = state.settings.model || "No model set";
       wrap.hidden = true;
       wrap.innerHTML = "";
@@ -403,8 +409,6 @@
       return;
     }
 
-    titleInput.disabled = false;
-    titleInput.value = chat.title;
     badge.textContent = chat.model || state.settings.model || "No model set";
 
     if (!chat.messages.length) {
@@ -695,7 +699,15 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
     }).then(function (json) {
-      var list = (json.data || []).map(function (m) { return { id: m.id, name: m.name || m.id }; });
+      // Only free models are ever shown here. A ":free" suffix is the usual
+      // naming pattern but isn't reliable on its own — some free models
+      // don't use it — so this checks OpenRouter's actual reported price.
+      var list = (json.data || [])
+        .filter(function (m) {
+          var pricing = m.pricing || {};
+          return parseFloat(pricing.prompt) === 0 && parseFloat(pricing.completion) === 0;
+        })
+        .map(function (m) { return { id: m.id, name: m.name || m.id }; });
       if (!list.length) return;
       list.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
       saveJson(LS_MODEL_CACHE, { ts: Date.now(), list: list });
@@ -746,8 +758,8 @@
 
   /* ---------------------------------------------------------- copy chat */
 
-  function copyChat() {
-    var chat = activeChat();
+  function copyChatById(id) {
+    var chat = chatById(id);
     if (!chat || !chat.messages.length) { toast("Nothing to copy yet."); return; }
     var text = chat.messages
       .filter(function (m) { return m.role !== "error"; })
@@ -763,6 +775,8 @@
 
   /* ------------------------------------------------------------- init -- */
 
+  var skipRenameCommit = false;
+
   function bindEvents() {
     $("#new-chat").addEventListener("click", newChat);
     $("#chat-search").addEventListener("input", renderSidebar);
@@ -770,15 +784,33 @@
     $("#chat-list").addEventListener("click", function (e) {
       var sel = e.target.closest("[data-select]");
       if (sel) { selectChat(sel.dataset.select); return; }
+      var ren = e.target.closest("[data-rename]");
+      if (ren) { e.stopPropagation(); renamingId = ren.dataset.rename; renderSidebar(); return; }
+      var cp = e.target.closest("[data-copy]");
+      if (cp) { e.stopPropagation(); copyChatById(cp.dataset.copy); return; }
       var del = e.target.closest("[data-delete]");
       if (del) { e.stopPropagation(); deleteChat(del.dataset.delete); }
     });
 
-    $("#chat-title").addEventListener("change", function () { renameActiveChat(this.value); });
-    $("#chat-title").addEventListener("keydown", function (e) { if (e.key === "Enter") this.blur(); });
-
-    $("#copy-chat").addEventListener("click", copyChat);
-    $("#delete-chat").addEventListener("click", function () { if (state.activeChat) deleteChat(state.activeChat); });
+    $("#chat-list").addEventListener("keydown", function (e) {
+      var input = e.target.closest("[data-rename-input]");
+      if (!input) return;
+      if (e.key === "Enter") { e.preventDefault(); input.blur(); }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        skipRenameCommit = true;
+        renamingId = null;
+        renderSidebar();
+      }
+    });
+    $("#chat-list").addEventListener("focusout", function (e) {
+      var input = e.target.closest("[data-rename-input]");
+      if (!input) return;
+      if (skipRenameCommit) { skipRenameCommit = false; return; }
+      var id = input.dataset.renameInput;
+      renamingId = null;
+      renameChat(id, input.value);
+    });
 
     $("#messages").addEventListener("click", function (e) {
       var cp = e.target.closest(".code-copy");
@@ -795,6 +827,7 @@
     });
     $("#stop-btn").addEventListener("click", stopGenerating);
 
+    $("#model-badge").addEventListener("click", openSettings);
     $("#open-settings").addEventListener("click", openSettings);
     $("#empty-settings-btn").addEventListener("click", openSettings);
     $("#settings-close").addEventListener("click", closeModals);

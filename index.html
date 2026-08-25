@@ -6,13 +6,17 @@
 <title>Router · OpenRouter Chat</title>
 <meta name="description" content="A small, self-hosted chat client for OpenRouter models.">
 <meta name="color-scheme" content="dark light">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23151821'/%3E%3Cpath d='M9 22V10h6.2a4.3 4.3 0 0 1 0 8.6H12l6 3.4' stroke='%23e0a458' stroke-width='2.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23262624'/%3E%3Cpath d='M9 22V10h6.2a4.3 4.3 0 0 1 0 8.6H12l6 3.4' stroke='%23D97757' stroke-width='2.3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
 <div class="app" id="app">
 
   <button class="scrim" id="scrim" aria-label="Close sidebar" hidden></button>
+
+  <button class="icon-btn mobile-menu-btn only-mobile" id="sidebar-open" aria-label="Open sidebar">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
 
   <!-- ============================================================ Sidebar -->
   <aside class="sidebar" id="sidebar">
@@ -49,26 +53,6 @@
 
   <!-- =============================================================== Main -->
   <main class="main">
-    <header class="topbar">
-      <button class="icon-btn only-mobile" id="sidebar-open" aria-label="Open sidebar">
-        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-
-      <div class="topbar-title">
-        <input type="text" id="chat-title" class="chat-title-input" placeholder="New chat" aria-label="Chat title" disabled>
-        <span class="model-badge" id="model-badge">No model set</span>
-      </div>
-
-      <div class="topbar-acts">
-        <button class="icon-btn" id="copy-chat" title="Copy conversation" aria-label="Copy conversation">
-          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M5 15V6a2 2 0 0 1 2-2h9" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>
-        </button>
-        <button class="icon-btn" id="delete-chat" title="Delete this chat" aria-label="Delete this chat">
-          <svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m2 0-.7 12.1A2 2 0 0 1 14.3 21H9.7a2 2 0 0 1-2-1.9L7 7" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-    </header>
-
     <div class="messages" id="messages">
       <div class="messages-inner" id="messages-inner" hidden></div>
       <div class="empty-state" id="empty-state">
@@ -79,6 +63,10 @@
         <p id="empty-copy">Pick a model in <strong>Settings</strong>, add your OpenRouter API key, and send a message.</p>
         <button class="btn btn-primary" id="empty-settings-btn" type="button">Open settings</button>
       </div>
+    </div>
+
+    <div class="composer-toolbar">
+      <button type="button" class="model-pill" id="model-badge" title="Change model">No model set</button>
     </div>
 
     <form class="composer" id="composer">
@@ -120,15 +108,15 @@
     </section>
 
     <section class="set-section">
-      <h3>Model</h3>
+      <h3>Model <span class="hint-inline">(free only)</span></h3>
       <div class="field">
         <label for="model-input">Model ID</label>
         <div class="input-with-btn">
-          <input type="text" id="model-input" list="model-options" spellcheck="false" placeholder="openai/gpt-4o-mini">
+          <input type="text" id="model-input" list="model-options" spellcheck="false" placeholder="e.g. stealth/ox-alpha">
           <button type="button" class="btn btn-ghost btn-sm" id="model-refresh">Refresh list</button>
         </div>
         <datalist id="model-options"></datalist>
-        <div class="hint" id="model-hint">Any OpenRouter model ID works here, whether or not it appears in the list.</div>
+        <div class="hint" id="model-hint">Only free OpenRouter models are listed, pulled live from openrouter.ai — free-tier availability rotates, so refresh if a model disappears.</div>
       </div>
       <div class="field-row">
         <div class="field">
